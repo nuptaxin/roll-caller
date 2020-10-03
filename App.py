@@ -11,7 +11,7 @@ class MyApp(QMainWindow, QWidget):
     def __init__(self):
         super().__init__()
 
-        with open("../conf/namelist.txt", "r", encoding='utf-8') as f:
+        with open("conf/namelist.txt", "r", encoding='utf-8') as f:
             self.name_list = f.read().splitlines()
         self.App()
 
@@ -54,7 +54,7 @@ class MyApp(QMainWindow, QWidget):
         self.image_lable.setGeometry(50, 50, 470, 300)
         #为图片设置属性
         self.image_lable.setStyleSheet("border: 2px solid blue")
-        defaultimage= '../images/开始点名.jpg'
+        defaultimage= 'images/开始点名.jpg'
         self.pnx = QPixmap(defaultimage)  # 加载图片路径
         self.image_lable.setPixmap(self.pnx)  # 将图片显示画布上
         self.image_lable.setScaledContents(True)  # 图片自适应窗
@@ -67,8 +67,8 @@ class MyApp(QMainWindow, QWidget):
         self.stop_button.clicked.connect(lambda: self.btnsetenabled(self.start_button))
         # 设置图片显示
 
-        self.start_music = Phonon.createPlayer(Phonon.MusicCategory, Phonon.MediaSource("../music/start.mp3"))
-        self.end_music = Phonon.createPlayer(Phonon.MusicCategory, Phonon.MediaSource("../music/end.mp3"))
+        self.start_music = Phonon.createPlayer(Phonon.MusicCategory, Phonon.MediaSource("music/start.mp3"))
+        self.end_music = Phonon.createPlayer(Phonon.MusicCategory, Phonon.MediaSource("music/end.mp3"))
 
     def setname_image(self):
         #点名系统
@@ -76,7 +76,7 @@ class MyApp(QMainWindow, QWidget):
         self.name_lable.setText(name)
         self.name_lable.setAlignment(Qt.AlignCenter)  # 设置文本对齐方式 居中对齐
         self.name_lable.setFont(self.font)
-        self.imagename= '../images/student-avatar/' + str(name) +'.jpg'  #设置图片路径
+        self.imagename= 'images/student-avatar/' + str(name) +'.jpg'  #设置图片路径
         self.pnx = QPixmap(self.imagename).scaled(self.image_lable.width(), self.image_lable.height(), Qt.KeepAspectRatio,
                                                 Qt.SmoothTransformation)
         self.image_lable.setPixmap(self.pnx) #将图片显示画布上
