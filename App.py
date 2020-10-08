@@ -1,7 +1,7 @@
 import random
+import os
 import sys
 
-from PyQt4 import QtGui
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.phonon import Phonon
@@ -11,21 +11,21 @@ class MyApp(QMainWindow, QWidget):
     def __init__(self):
         super().__init__()
 
+        # 设置字体大小
+        self.font = QFont()
+        self.font.setPointSize(23)
         with open("conf/namelist.txt", "r", encoding='utf-8') as f:
             self.name_list = f.read().splitlines()
+        mkpath = "cache"
+        self.local_rm(mkpath)
+        self.mkdir(mkpath)
+        file = open('cache/data.txt', 'w', encoding='utf-8')
+        for line in self.name_list:
+            file.write(line + '\n')
+        file = open('cache/skip.txt', 'w', encoding='utf-8')
         self.App()
 
     def App(self):
-        # 设置主体框架
-
-        #设置窗体名字
-        self.setWindowTitle('点名系统')
-        #设置窗体大小
-        self.resize(1000, 600)
-
-        # 设置字体大小
-        self.font = QtGui.QFont()
-        self.font.setPointSize(23)
 
         # 设置start按钮
         self.start_button = QPushButton('Start', self)
@@ -72,7 +72,9 @@ class MyApp(QMainWindow, QWidget):
 
     def setname_image(self):
         #点名系统
-        name = self.name_list[random.randint(0, len(self.name_list) - 1)]
+        with open("cache/data.txt", "r", encoding='utf-8') as f:
+            self.new_name_list = f.read().splitlines()
+        name = self.new_name_list[random.randint(0, len(self.new_name_list) - 1)]
         self.name_lable.setText(name)
         self.name_lable.setAlignment(Qt.AlignCenter)  # 设置文本对齐方式 居中对齐
         self.name_lable.setFont(self.font)
@@ -99,6 +101,17 @@ class MyApp(QMainWindow, QWidget):
         self.start_music.stop()
         self.end_music.play()
         self.timer.stop()
+        #移除当前的
+        curr_name=self.name_lable.text()
+        with open("cache/data.txt", "r", encoding='utf-8') as f:
+            self.curr_name_list = f.read().splitlines()
+        file = open('cache/data.txt', 'w', encoding='utf-8')
+        for i in self.curr_name_list:
+            if(curr_name!=i):
+                file.write(i + '\n')
+
+        file = open('cache/skip.txt', 'a', encoding='utf-8')
+        file.write(curr_name + '\n')
 
     # 程序退出
     def closeEvent(self, event):
@@ -115,17 +128,140 @@ class MyApp(QMainWindow, QWidget):
         # 按下按钮后解除禁止可以继续点击
         btn.setEnabled(True)
 
+    def mkdir(self, path):
+        # 引入模块
+        import os
+
+        # 去除首位空格
+        path = path.strip()
+        # 去除尾部 \ 符号
+        path = path.rstrip("\\")
+
+        # 判断路径是否存在
+        # 存在     True
+        # 不存在   False
+        isExists = os.path.exists(path)
+
+        # 判断结果
+        if not isExists:
+            # 如果不存在则创建目录
+            # 创建目录操作函数
+            os.makedirs(path)
+
+            print
+            path + ' 创建成功'
+            return True
+        else:
+            # 如果目录存在则不创建，并提示目录已存在
+            print
+            path + ' 目录已存在'
+            return False
+
+    def local_rm(self, dirpath):
+        if os.path.exists(dirpath):
+            files = os.listdir(dirpath)
+            for file in files:
+                filepath = os.path.join(dirpath, file).replace("\\", '/')
+                if os.path.isdir(filepath):
+                    self.local_rm(filepath)
+                else:
+                    os.remove(filepath)
+            os.rmdir(dirpath)
 
 class ManageWidget(QDialog):
-    def __init__(self, parent=None):
-        super(ManageWidget, self).__init__(parent)
-        self.setStyleSheet("background: red")
+    def __init__(self):
+        super().__init__()
+        self.centralwidget = QWidget()
+        self.centralwidget.setObjectName("centralwidget")
+        self.listWidget1 = QListWidget(self)
+        self.listWidget1.setGeometry(QRect(370, 120, 151, 311))
+        self.listWidget1.setObjectName("listWidget1")
+        self.listWidget1.setSelectionMode(QAbstractItemView.MultiSelection)
+        self.listWidget_2 = QListWidget(self)
+        self.listWidget_2.setGeometry(QRect(600, 120, 151, 311))
+        self.listWidget_2.setObjectName("listWidget_2")
+        self.listWidget_2.setSelectionMode(QAbstractItemView.MultiSelection)
+        self.pushButton_3 = QPushButton(self)
+        self.pushButton_3.setGeometry(QRect(540, 220, 51, 21))
+        self.pushButton_3.setObjectName("pushButton_3")
+        self.pushButton_4 = QPushButton(self)
+        self.pushButton_4.setGeometry(QRect(540, 270, 51, 21))
+        self.pushButton_4.setObjectName("pushButton_4")
+        self.save_button = QPushButton('Save', self)
+        self.save_button.resize(100, 50)
+        self.save_button.move(700, 450)
+        self.refresh_button = QPushButton('Refresh', self)
+        self.refresh_button.resize(100, 50)
+        self.refresh_button.move(300, 450)
+        self.retranslateUi()
 
+    def retranslateUi(self):
+        __sortingEnabled = self.listWidget1.isSortingEnabled()
+        self.listWidget1.setSortingEnabled(False)
+        with open("cache/data.txt", "r", encoding='utf-8') as f:
+            for line in f.read().splitlines():
+                item = QListWidgetItem(line)
+                self.listWidget1.addItem(item)
+        self.listWidget1.setSortingEnabled(__sortingEnabled)
+        self.pushButton_3.setText(">")
+        self.pushButton_3.clicked.connect(lambda: self.click_pushButton3())
+        self.pushButton_4.setText("<")
+        self.pushButton_4.clicked.connect(lambda: self.click_pushButton4())
+        self.save_button.clicked.connect(lambda: self.click_saveButton())
+        self.refresh_button.clicked.connect(lambda: self.click_refreshButton())
+
+    def click_pushButton3(self):
+        # sort rows in descending order in order to compensate shifting due to takeItem
+
+        rows = sorted([index.row() for index in self.listWidget1.selectedIndexes()],
+                      reverse=True)
+        for row in rows:
+            # assuming the other listWidget is called listWidget_2
+            self.listWidget_2.addItem(self.listWidget1.takeItem(row))
+
+    def click_pushButton4(self):
+        # sort rows in descending order in order to compensate shifting due to takeItem
+
+        rows = sorted([index.row() for index in self.listWidget_2.selectedIndexes()],
+                      reverse=True)
+        for row in rows:
+            # assuming the other listWidget is called listWidget_2
+            self.listWidget1.addItem(self.listWidget_2.takeItem(row))
+
+    def click_saveButton(self):
+        file = open('cache/data.txt', 'w', encoding='utf-8')
+        count = self.listWidget1.count()
+        for i in range(count):
+            file.write(self.listWidget1.item(i).text() + '\n')
+
+        file = open('cache/skip.txt', 'w', encoding='utf-8')
+        count = self.listWidget_2.count()
+        for i in range(count):
+            file.write(self.listWidget_2.item(i).text() + '\n')
+
+    def click_refreshButton(self):
+        self.listWidget1.clear()
+        with open("cache/data.txt", "r", encoding='utf-8') as f:
+            for line in f.read().splitlines():
+                item = QListWidgetItem(line)
+                self.listWidget1.addItem(item)
+
+        self.listWidget_2.clear()
+        with open("cache/skip.txt", "r", encoding='utf-8') as f:
+            for line in f.read().splitlines():
+                item = QListWidgetItem(line)
+                self.listWidget_2.addItem(item)
 
 class TabWidget(QTabWidget):
     def __init__(self, parent=None):
         super(TabWidget, self).__init__(parent)
+        # 设置主体框架
+
+        # 设置窗体名字
+        self.setWindowTitle('点名系统')
+        # 设置窗体大小
         self.resize(1000, 600)
+
         self.mainTab = MyApp()
         self.mTab = ManageWidget()
         self.addTab(self.mainTab, u"主界面")

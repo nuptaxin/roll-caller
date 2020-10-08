@@ -3,3 +3,4 @@ App.spec
 bin/__pycache__/
 build/
 dist/
+cache/
