@@ -116,8 +116,24 @@ class MyApp(QMainWindow, QWidget):
         btn.setEnabled(True)
 
 
+class ManageWidget(QDialog):
+    def __init__(self, parent=None):
+        super(ManageWidget, self).__init__(parent)
+        self.setStyleSheet("background: red")
+
+
+class TabWidget(QTabWidget):
+    def __init__(self, parent=None):
+        super(TabWidget, self).__init__(parent)
+        self.resize(1000, 600)
+        self.mainTab = MyApp()
+        self.mTab = ManageWidget()
+        self.addTab(self.mainTab, u"主界面")
+        self.addTab(self.mTab, u"管理")
+
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    myapp = MyApp()
+    myapp = TabWidget()
     myapp.show()
     sys.exit(app.exec_())
