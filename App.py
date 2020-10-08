@@ -47,6 +47,7 @@ class MyApp(QMainWindow, QWidget):
         self.name_lable.setAlignment(Qt.AlignCenter)
         self.name_lable.setFont(self.font)
 
+        self.timer = QTimer(self)
 
         # 设置图片显示
         self.image_lable = QLabel(self)
@@ -70,6 +71,17 @@ class MyApp(QMainWindow, QWidget):
         self.start_music = Phonon.createPlayer(Phonon.MusicCategory, Phonon.MediaSource("music/start.mp3"))
         self.end_music = Phonon.createPlayer(Phonon.MusicCategory, Phonon.MediaSource("music/end.mp3"))
 
+    def reinit(self):
+        defaultimage = 'images/开始点名.jpg'
+        self.pnx = QPixmap(defaultimage)  # 加载图片路径
+        self.image_lable.setPixmap(self.pnx)  # 将图片显示画布上
+        self.image_lable.setScaledContents(True)  # 图片自适应窗
+        self.name_lable.setText('这个人是谁呢？')
+        self.start_music.stop()
+        self.end_music.stop()
+        self.timer.stop()
+        self.btnsetenabled(self.start_button)
+
     def setname_image(self):
         #点名系统
         with open("cache/data.txt", "r", encoding='utf-8') as f:
@@ -92,7 +104,6 @@ class MyApp(QMainWindow, QWidget):
         self.start_button.setEnabled(False)  #将start按钮设置成禁止点击
         self.end_music.stop()
         self.start_music.play()
-        self.timer = QTimer(self)
         self.timer.timeout.connect(self.setname_image)
         self.timer.start(50) #图片播放的时间
 
@@ -113,15 +124,6 @@ class MyApp(QMainWindow, QWidget):
         file = open('cache/skip.txt', 'a', encoding='utf-8')
         file.write(curr_name + '\n')
 
-    # 程序退出
-    def closeEvent(self, event):
-        reply = QMessageBox.question(self, ' Message ',
-                                     "Are you sure to quit?", QMessageBox.Yes |
-                                     QMessageBox.No, QMessageBox.No)
-        if reply == QMessageBox.Yes:
-            event.accept()
-        else:
-            event.ignore()
     #设置按钮解禁
     def btnsetenabled(self,btn):
         # print(btn.isEnabled()) False
@@ -174,25 +176,25 @@ class ManageWidget(QDialog):
         self.centralwidget = QWidget()
         self.centralwidget.setObjectName("centralwidget")
         self.listWidget1 = QListWidget(self)
-        self.listWidget1.setGeometry(QRect(370, 120, 151, 311))
+        self.listWidget1.setGeometry(QRect(170, 120, 151, 311))
         self.listWidget1.setObjectName("listWidget1")
         self.listWidget1.setSelectionMode(QAbstractItemView.MultiSelection)
         self.listWidget_2 = QListWidget(self)
-        self.listWidget_2.setGeometry(QRect(600, 120, 151, 311))
+        self.listWidget_2.setGeometry(QRect(400, 120, 151, 311))
         self.listWidget_2.setObjectName("listWidget_2")
         self.listWidget_2.setSelectionMode(QAbstractItemView.MultiSelection)
         self.pushButton_3 = QPushButton(self)
-        self.pushButton_3.setGeometry(QRect(540, 220, 51, 21))
+        self.pushButton_3.setGeometry(QRect(340, 220, 51, 21))
         self.pushButton_3.setObjectName("pushButton_3")
         self.pushButton_4 = QPushButton(self)
-        self.pushButton_4.setGeometry(QRect(540, 270, 51, 21))
+        self.pushButton_4.setGeometry(QRect(340, 270, 51, 21))
         self.pushButton_4.setObjectName("pushButton_4")
         self.save_button = QPushButton('Save', self)
         self.save_button.resize(100, 50)
-        self.save_button.move(700, 450)
-        self.refresh_button = QPushButton('Refresh', self)
-        self.refresh_button.resize(100, 50)
-        self.refresh_button.move(300, 450)
+        self.save_button.move(500, 450)
+        #self.refresh_button = QPushButton('Refresh', self)
+        #self.refresh_button.resize(100, 50)
+        #self.refresh_button.move(300, 450)
         self.retranslateUi()
 
     def retranslateUi(self):
@@ -208,7 +210,7 @@ class ManageWidget(QDialog):
         self.pushButton_4.setText("<")
         self.pushButton_4.clicked.connect(lambda: self.click_pushButton4())
         self.save_button.clicked.connect(lambda: self.click_saveButton())
-        self.refresh_button.clicked.connect(lambda: self.click_refreshButton())
+        #self.refresh_button.clicked.connect(lambda: self.click_refreshButton())
 
     def click_pushButton3(self):
         # sort rows in descending order in order to compensate shifting due to takeItem
@@ -252,6 +254,19 @@ class ManageWidget(QDialog):
                 item = QListWidgetItem(line)
                 self.listWidget_2.addItem(item)
 
+    def reinit(self):
+        self.listWidget1.clear()
+        with open("cache/data.txt", "r", encoding='utf-8') as f:
+            for line in f.read().splitlines():
+                item = QListWidgetItem(line)
+                self.listWidget1.addItem(item)
+
+        self.listWidget_2.clear()
+        with open("cache/skip.txt", "r", encoding='utf-8') as f:
+            for line in f.read().splitlines():
+                item = QListWidgetItem(line)
+                self.listWidget_2.addItem(item)
+
 class TabWidget(QTabWidget):
     def __init__(self, parent=None):
         super(TabWidget, self).__init__(parent)
@@ -266,7 +281,17 @@ class TabWidget(QTabWidget):
         self.mTab = ManageWidget()
         self.addTab(self.mainTab, u"主界面")
         self.addTab(self.mTab, u"管理")
-
+        self.connect(self, SIGNAL("currentChanged(int)"), self.mainTab.reinit)
+        self.connect(self, SIGNAL("currentChanged(int)"), self.mTab.reinit)
+    # 程序退出
+    def closeEvent(self, event):
+        reply = QMessageBox.question(self, ' Message ',
+                                     "Are you sure to quit?", QMessageBox.Yes |
+                                     QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
